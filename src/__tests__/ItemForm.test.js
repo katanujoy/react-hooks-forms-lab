@@ -1,47 +1,54 @@
-import "@testing-library/jest-dom";
-import { render, screen, fireEvent } from "@testing-library/react";
-import ItemForm from "../components/ItemForm";
-import App from "../components/App";
+// src/components/ItemForm.js
+import React, { useState } from "react";
+import { v4 as uuid } from "uuid";
 
-test("calls the onItemFormSubmit callback prop when the form is submitted", () => {
-  const onItemFormSubmit = jest.fn();
-  render(<ItemForm onItemFormSubmit={onItemFormSubmit} />);
+function ItemForm({ onItemFormSubmit }) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("Produce");
 
-  fireEvent.change(screen.queryByLabelText(/Name/), {
-    target: { value: "Ice Cream" },
-  });
+  function handleSubmit(e) {
+    e.preventDefault();
 
-  fireEvent.change(screen.queryByLabelText(/Category/), {
-    target: { value: "Dessert" },
-  });
+    const newItem = {
+      id: uuid(),
+      name: name.trim(),
+      category,
+    };
 
-  fireEvent.submit(screen.queryByText(/Add to List/));
+    if (newItem.name !== "") {
+      onItemFormSubmit(newItem);
+      setName("");
+      setCategory("Produce");
+    }
+  }
 
-  expect(onItemFormSubmit).toHaveBeenCalledWith(
-    expect.objectContaining({
-      id: expect.any(String),
-      name: "Ice Cream",
-      category: "Dessert",
-    })
+  return (
+    <form className="NewItem" onSubmit={handleSubmit}>
+      <label htmlFor="name">Name:</label>
+      <input
+        id="name"
+        type="text"
+        name="name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <label htmlFor="category">Category:</label>
+      <select
+        id="category"
+        name="category"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      >
+        <option value="Produce">Produce</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Dessert">Dessert</option>
+        <option value="Meat">Meat</option>
+      </select>
+
+      <button type="submit">Add to List</button>
+    </form>
   );
-});
+}
 
-test("adds a new item to the list when the form is submitted", () => {
-  render(<App />);
-
-  const dessertCount = screen.queryAllByText(/Dessert/).length;
-
-  fireEvent.change(screen.queryByLabelText(/Name/), {
-    target: { value: "Ice Cream" },
-  });
-
-  fireEvent.change(screen.queryByLabelText(/Category/), {
-    target: { value: "Dessert" },
-  });
-
-  fireEvent.submit(screen.queryByText(/Add to List/));
-
-  expect(screen.queryByText(/Ice Cream/)).toBeInTheDocument();
-
-  expect(screen.queryAllByText(/Dessert/).length).toBe(dessertCount + 1);
-});
+export default ItemForm;
